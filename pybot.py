@@ -61,6 +61,8 @@ try:
             opener.addheaders = [('User-agent', 'Mozilla/5.0')]
             soup = BeautifulSoup(opener.open(url), 'lxml')
             s.send("PRIVMSG %s :%s's url: %s\r\n" % (IRC_CHANNEL, sender, soup.title.string.encode('utf-8')))
+          except AttributeError:
+            s.send('PRIVMSG ' + IRC_CHANNEL + ' :' + sender + ': No title!\r\n')
           except IOError:
             s.send('PRIVMSG ' + IRC_CHANNEL + ' :' + sender + ': No such site!\r\n')
 except socket.error:

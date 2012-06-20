@@ -3,6 +3,7 @@
 # vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2
 
 from bs4 import BeautifulSoup
+import cookielib
 import re
 import signal
 import socket
@@ -55,7 +56,8 @@ try:
         if match != None:
           url = match.group(1)
           try:
-            opener = urllib2.build_opener()
+            cj = cookielib.CookieJar()
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
             opener.addheaders = [('User-agent', 'Mozilla/5.0')]
             soup = BeautifulSoup(opener.open(url), 'lxml')
             s.send("PRIVMSG %s :%s's url: %s\r\n" % (IRC_CHANNEL, sender, soup.title.string.encode('utf-8')))

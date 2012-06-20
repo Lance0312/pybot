@@ -12,9 +12,9 @@ import urllib2
 
 IRC_SERVER = 'irc.freenode.net'
 IRC_PORT = 6667
-IRC_CHANNEL = '#'
+IRC_CHANNEL = '#cyentest'
 IRC_CHANNEL_KEY = ''
-IRC_NICK = ''
+IRC_NICK = 'cyen_bot'
 
 def look_for_sender(data):
   sender = None
@@ -59,8 +59,13 @@ try:
             cj = cookielib.CookieJar()
             opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
             opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-            soup = BeautifulSoup(opener.open(url), 'lxml')
-            s.send("PRIVMSG %s :%s's url: %s\r\n" % (IRC_CHANNEL, sender, soup.title.string.encode('utf-8')))
+            urlhandle = opener.open(url)
+            if 'text/html' in urlhandle.info()['Content-Type']:
+              soup = BeautifulSoup(urlhandle)
+              title = re.sub('[\r\n ]+', ' ', soup.title.string)
+              s.send("PRIVMSG %s :%s's url: [] %s\r\n" % (IRC_CHANNEL, sender, title.encode('utf-8')))
+            else:
+              s.send("PRIVMSG %s :%s's url: [] is %s type. (%.2f MB)\r\n" % (IRC_CHANNEL, sender, urlhandle.info()['Content-Type'], float(urlhandle.info()['Content-Length'])/1024/1024))
           except AttributeError:
             s.send('PRIVMSG ' + IRC_CHANNEL + ' :' + sender + ': No title!\r\n')
           except IOError:

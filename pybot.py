@@ -3,6 +3,7 @@
 # vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2
 
 from bs4 import BeautifulSoup
+import ConfigParser
 import cookielib
 import re
 import signal
@@ -10,11 +11,14 @@ import socket
 import time
 import urllib2
 
-IRC_SERVER = 'irc.freenode.net'
-IRC_PORT = 6667
-IRC_CHANNEL = '#cyentest'
-IRC_CHANNEL_KEY = ''
-IRC_NICK = 'cyen_bot'
+config = ConfigParser.RawConfigParser()
+config.read('config')
+
+IRC_SERVER = config.get('general', 'IRC_SERVER')
+IRC_PORT = config.getint('general', 'IRC_PORT')
+IRC_CHANNEL = config.get('general', 'IRC_CHANNEL')
+IRC_CHANNEL_KEY = config.get('general', 'IRC_CHANNEL_KEY')
+IRC_NICK = config.get('general', 'IRC_NICK')
 
 def look_for_sender(data):
   sender = None

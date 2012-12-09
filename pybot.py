@@ -62,6 +62,8 @@ try:
         match = re.match('.*PRIVMSG\s+(\S+)\s+:.*(https?://\S+)', data)
         if match != None:
           channel = match.group(1)
+          if channel == IRC_NICK:
+            channel = sender
           url = match.group(2)
           try:
             cj = cookielib.CookieJar()

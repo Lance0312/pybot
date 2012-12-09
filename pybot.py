@@ -19,6 +19,13 @@ IRC_PORT = config.getint('general', 'IRC_PORT')
 IRC_NICK = config.get('general', 'IRC_NICK')
 IRC_CHANNELS = eval(config.get('general', 'IRC_CHANNELS'), {}, {})
 
+def parse_data(data):
+  match = re.match(':(\w+)!(\S+) (\w+) (\S+) :(.*)', data)
+  if match:
+    return match.groups()
+  else:
+    return None
+
 def look_for_sender(data):
   sender = None
   match = re.match(':(\w+)!', data)
@@ -49,22 +56,25 @@ try:
     s.send('PRIVMSG ' + channel + ' :Hi, there!\r\n')
   while True:
     data = s.recv(256)
-    sender = look_for_sender(data)
     print data
+    parsed_result = parse_data(data)
+    if parsed_result:
+      sender, host, command, channel, msg = parsed_result
+      if channel == IRC_NICK:
+        channel = sender
+    else:
+      continue
     if data:
       if 'PING' in data:
         match = re.match('^PING (:\w+)', data)
         if match != None:
           s.send('PONG ' + match.group(1) + '\r\n')
       if 'http' in data:
-        if re.match(':\w+_bot.*', data):
+        if '_bot' in sender:
           continue
-        match = re.match('.*PRIVMSG\s+(\S+)\s+:.*(https?://\S+)', data)
+        match = re.match('(https?://\S+)', msg)
         if match != None:
-          channel = match.group(1)
-          if channel == IRC_NICK:
-            channel = sender
-          url = match.group(2)
+          url = match.group(1)
           try:
             cj = cookielib.CookieJar()
             opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))

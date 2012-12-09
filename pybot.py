@@ -16,9 +16,8 @@ config.read('config')
 
 IRC_SERVER = config.get('general', 'IRC_SERVER')
 IRC_PORT = config.getint('general', 'IRC_PORT')
-IRC_CHANNEL = config.get('general', 'IRC_CHANNEL')
-IRC_CHANNEL_KEY = config.get('general', 'IRC_CHANNEL_KEY')
 IRC_NICK = config.get('general', 'IRC_NICK')
+IRC_CHANNELS = eval(config.get('general', 'IRC_CHANNELS'), {}, {})
 
 def look_for_sender(data):
   sender = None
@@ -43,9 +42,11 @@ except socket.error:
 try:
   s.send('USER ' + IRC_NICK + ' * * :' + IRC_NICK + '\r\n')
   s.send('NICK ' + IRC_NICK + '\r\n')
-  s.send('JOIN ' + IRC_CHANNEL + ' ' + IRC_CHANNEL_KEY + '\r\n')
+  for channel,key in IRC_CHANNELS:
+    s.send('JOIN ' + channel + ' ' + key + '\r\n')
   time.sleep(10)
-  s.send('PRIVMSG ' + IRC_CHANNEL + ' :Hi, there!\r\n')
+  for channel,key in IRC_CHANNELS:
+    s.send('PRIVMSG ' + channel + ' :Hi, there!\r\n')
   while True:
     data = s.recv(256)
     sender = look_for_sender(data)
@@ -56,9 +57,10 @@ try:
         if match != None:
           s.send('PONG ' + match.group(1) + '\r\n')
       if 'http' in data:
-        match = re.match('.*PRIVMSG.*(https?://\S+)', data)
+        match = re.match('.*PRIVMSG\s+(\S+)\s+:.*(https?://\S+)', data)
         if match != None:
-          url = match.group(1)
+          channel = match.group(1)
+          url = match.group(2)
           try:
             cj = cookielib.CookieJar()
             opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
@@ -67,13 +69,16 @@ try:
             if 'text/html' in urlhandle.info()['Content-Type']:
               soup = BeautifulSoup(urlhandle)
               title = re.sub('[\r\n ]+', ' ', soup.title.string)
-              s.send("PRIVMSG %s :%s's url: [] %s\r\n" % (IRC_CHANNEL, sender, title.encode('utf-8')))
+              s.send("PRIVMSG %s :%s's url: [] %s\r\n" %
+                (channel, sender, title.encode('utf-8')))
             else:
-              s.send("PRIVMSG %s :%s's url: [] is %s type. (%.2f MB)\r\n" % (IRC_CHANNEL, sender, urlhandle.info()['Content-Type'], float(urlhandle.info()['Content-Length'])/1024/1024))
+              s.send("PRIVMSG %s :%s's url: [] is %s type. (%.2f MB)\r\n" %
+                (channel, sender, urlhandle.info()['Content-Type'],
+                  float(urlhandle.info()['Content-Length'])/1024/1024))
           except AttributeError:
-            s.send('PRIVMSG ' + IRC_CHANNEL + ' :' + sender + ': No title!\r\n')
+            s.send('PRIVMSG ' + channel + ' :' + sender + ': No title!\r\n')
           except IOError:
-            s.send('PRIVMSG ' + IRC_CHANNEL + ' :' + sender + ': No such site!\r\n')
+            s.send('PRIVMSG ' + channel + ' :' + sender + ': No such site!\r\n')
 except socket.error:
   print 'err'
 

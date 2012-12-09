@@ -57,6 +57,8 @@ try:
         if match != None:
           s.send('PONG ' + match.group(1) + '\r\n')
       if 'http' in data:
+        if re.match(':\w+_bot.*', data):
+          continue
         match = re.match('.*PRIVMSG\s+(\S+)\s+:.*(https?://\S+)', data)
         if match != None:
           channel = match.group(1)
